@@ -16,12 +16,10 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "src/types"],
+  "include": ["src/**/*", "src/types/**/*"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

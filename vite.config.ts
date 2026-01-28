@@ -44,5 +44,8 @@ export default defineConfig({
   },
   css: {
     postcss: './postcss.config.js'
+  },
+  build: {
+    cssMinify: 'esbuild'  // Use esbuild instead of lightningcss to avoid @property warnings
   }
 })
