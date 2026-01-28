@@ -448,6 +448,128 @@ async function copyFolder(src: string, dest: string): Promise<void> {
   }
 }
 
+// Get available UI mods
+ipcMain.handle('badge:getAvailableMods', async () => {
+  // Get mods from the app's badge-files/mods directory
+  const appPath = app.isPackaged 
+    ? path.join(process.resourcesPath, 'badge-files', 'mods')
+    : path.join(__dirname, '..', 'badge-files', 'mods')
+  
+  const mods = []
+  
+  if (fs.existsSync(appPath)) {
+    try {
+      const entries = await fs.promises.readdir(appPath, { withFileTypes: true })
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          const initPath = path.join(appPath, entry.name, '__init__.py')
+          if (fs.existsSync(initPath)) {
+            mods.push({
+              name: entry.name,
+              description: entry.name === 'clean-badge' 
+                ? 'Cleaner GitHub profile display with dark theme'
+                : entry.name === 'clean-menu'
+                  ? 'Cleaner app launcher with organized grid'
+                  : `UI mod: ${entry.name}`
+            })
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error reading mods:', error)
+    }
+  }
+  
+  return { success: true, mods }
+})
+
+// Install a UI mod to the badge
+ipcMain.handle('badge:installMod', async (_event, modName: string) => {
+  const badgeInfo = findBadgePath()
+  
+  if (!badgeInfo.connected || badgeInfo.mode !== 'disk' || !badgeInfo.path) {
+    return { success: false, error: 'Badge not connected in disk mode' }
+  }
+
+  // Get mod source path
+  const appPath = app.isPackaged 
+    ? path.join(process.resourcesPath, 'badge-files', 'mods')
+    : path.join(__dirname, '..', 'badge-files', 'mods')
+  
+  const modSourcePath = path.join(appPath, modName, '__init__.py')
+  
+  if (!fs.existsSync(modSourcePath)) {
+    return { success: false, error: `Mod not found: ${modName}` }
+  }
+
+  // Determine target app based on mod name
+  let targetAppName = ''
+  if (modName === 'clean-badge') {
+    targetAppName = 'badge'
+  } else if (modName === 'clean-menu') {
+    targetAppName = 'menu'
+  } else {
+    // Generic: assume mod name matches app name
+    targetAppName = modName.replace('clean-', '')
+  }
+
+  // Find target path (check system/apps first, then apps)
+  let targetPath = path.join(badgeInfo.path, 'system', 'apps', targetAppName, '__init__.py')
+  if (!fs.existsSync(path.dirname(targetPath))) {
+    targetPath = path.join(badgeInfo.path, 'apps', targetAppName, '__init__.py')
+  }
+
+  if (!fs.existsSync(path.dirname(targetPath))) {
+    return { success: false, error: `Target app not found on badge: ${targetAppName}` }
+  }
+
+  try {
+    // Create backup of original
+    const backupPath = targetPath + '.original'
+    if (fs.existsSync(targetPath) && !fs.existsSync(backupPath)) {
+      await fs.promises.copyFile(targetPath, backupPath)
+    }
+    
+    // Copy mod to target
+    await fs.promises.copyFile(modSourcePath, targetPath)
+    
+    return { 
+      success: true, 
+      message: `Installed ${modName} mod. Original backed up as __init__.py.original` 
+    }
+  } catch (error) {
+    return { success: false, error: `Failed to install mod: ${error}` }
+  }
+})
+
+// Restore original app (undo mod)
+ipcMain.handle('badge:restoreMod', async (_event, appName: string) => {
+  const badgeInfo = findBadgePath()
+  
+  if (!badgeInfo.connected || badgeInfo.mode !== 'disk' || !badgeInfo.path) {
+    return { success: false, error: 'Badge not connected in disk mode' }
+  }
+
+  // Find target path
+  let targetPath = path.join(badgeInfo.path, 'system', 'apps', appName, '__init__.py')
+  if (!fs.existsSync(path.dirname(targetPath))) {
+    targetPath = path.join(badgeInfo.path, 'apps', appName, '__init__.py')
+  }
+
+  const backupPath = targetPath + '.original'
+  
+  if (!fs.existsSync(backupPath)) {
+    return { success: false, error: 'No backup found. Cannot restore original.' }
+  }
+
+  try {
+    await fs.promises.copyFile(backupPath, targetPath)
+    return { success: true, message: `Restored original ${appName} app` }
+  } catch (error) {
+    return { success: false, error: `Failed to restore: ${error}` }
+  }
+})
+
 // Get available apps from simulator repo
 ipcMain.handle('badge:getAvailableApps', async () => {
   const homeDir = process.env.HOME || process.env.USERPROFILE || ''

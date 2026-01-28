@@ -19,6 +19,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installApp: (appName) => ipcRenderer.invoke('badge:installApp', appName),
   getAvailableApps: () => ipcRenderer.invoke('badge:getAvailableApps'),
   
+  // UI Mods
+  getAvailableMods: () => ipcRenderer.invoke('badge:getAvailableMods'),
+  installMod: (modName) => ipcRenderer.invoke('badge:installMod', modName),
+  restoreMod: (appName) => ipcRenderer.invoke('badge:restoreMod', appName),
+  
   // Badge personal info (eInk display)
   readBadgeInfo: () => ipcRenderer.invoke('badge:readBadgeInfo'),
   writeBadgeInfo: (info) => ipcRenderer.invoke('badge:writeBadgeInfo', info),

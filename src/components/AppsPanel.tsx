@@ -5,6 +5,11 @@ interface AppInfo {
   hasIcon: boolean
 }
 
+interface ModInfo {
+  name: string
+  description: string
+}
+
 interface AppsPanelProps {
   isConnected: boolean
   showNotification: (type: 'success' | 'error' | 'info', message: string) => void
@@ -27,11 +32,15 @@ const appMetadata: Record<string, { description: string; icon: string; isSystem?
 export default function AppsPanel({ isConnected, showNotification }: AppsPanelProps) {
   const [installedApps, setInstalledApps] = useState<AppInfo[]>([])
   const [availableApps, setAvailableApps] = useState<AppInfo[]>([])
+  const [availableMods, setAvailableMods] = useState<ModInfo[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingAvailable, setIsLoadingAvailable] = useState(false)
   const [removingApp, setRemovingApp] = useState<string | null>(null)
   const [installingApp, setInstallingApp] = useState<string | null>(null)
+  const [installingMod, setInstallingMod] = useState<string | null>(null)
+  const [restoringMod, setRestoringMod] = useState<string | null>(null)
   const [showStore, setShowStore] = useState(false)
+  const [showMods, setShowMods] = useState(false)
 
   const loadApps = async () => {
     if (!window.electronAPI || !isConnected) return
@@ -73,6 +82,19 @@ export default function AppsPanel({ isConnected, showNotification }: AppsPanelPr
     }
   }
 
+  const loadAvailableMods = async () => {
+    if (!window.electronAPI) return
+
+    try {
+      const result = await window.electronAPI.getAvailableMods()
+      if (result.success && result.mods) {
+        setAvailableMods(result.mods)
+      }
+    } catch (error) {
+      console.error('Failed to load mods:', error)
+    }
+  }
+
   useEffect(() => {
     if (isConnected) {
       loadApps()
@@ -84,6 +106,48 @@ export default function AppsPanel({ isConnected, showNotification }: AppsPanelPr
       loadAvailableApps()
     }
   }, [showStore, installedApps])
+
+  useEffect(() => {
+    if (showMods) {
+      loadAvailableMods()
+    }
+  }, [showMods])
+
+  const handleInstallMod = async (modName: string) => {
+    if (!window.electronAPI) return
+
+    setInstallingMod(modName)
+    try {
+      const result = await window.electronAPI.installMod(modName)
+      if (result.success) {
+        showNotification('success', result.message || `Installed ${modName} mod`)
+      } else {
+        showNotification('error', result.error || 'Failed to install mod')
+      }
+    } catch (error) {
+      showNotification('error', `Error: ${error}`)
+    } finally {
+      setInstallingMod(null)
+    }
+  }
+
+  const handleRestoreMod = async (appName: string) => {
+    if (!window.electronAPI) return
+
+    setRestoringMod(appName)
+    try {
+      const result = await window.electronAPI.restoreMod(appName)
+      if (result.success) {
+        showNotification('success', result.message || `Restored ${appName}`)
+      } else {
+        showNotification('error', result.error || 'Failed to restore')
+      }
+    } catch (error) {
+      showNotification('error', `Error: ${error}`)
+    } finally {
+      setRestoringMod(null)
+    }
+  }
 
   const handleRemoveApp = async (appName: string) => {
     if (!window.electronAPI) return
@@ -319,6 +383,85 @@ export default function AppsPanel({ isConnected, showNotification }: AppsPanelPr
                       </div>
                     )
                   })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* UI Mods Section */}
+          <div className="card border-secondary/30">
+            <div className="card-body p-6">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="font-bold text-base-content flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-secondary/20 flex items-center justify-center">
+                    <span className="icon-[tabler--wand] size-5 text-secondary"></span>
+                  </div>
+                  UI Mods
+                </h3>
+                <button
+                  className={`btn btn-sm h-9 gap-2 ${showMods ? 'btn-secondary' : 'btn-outline'}`}
+                  onClick={() => setShowMods(!showMods)}
+                >
+                  <span className="icon-[tabler--sparkles] size-4"></span>
+                  {showMods ? 'Hide Mods' : 'Show Mods'}
+                </button>
+              </div>
+
+              <p className="text-sm text-base-content/60 mb-4">
+                Install cleaner UI themes for your badge apps. These mods improve visual design within the 160×120 pixel display constraints.
+              </p>
+
+              {showMods && (
+                <div className="space-y-3 mt-4">
+                  {availableMods.length === 0 ? (
+                    <p className="text-base-content/50 text-center py-6">Loading mods...</p>
+                  ) : (
+                    availableMods.map((mod) => {
+                      const isInstalling = installingMod === mod.name
+                      const appName = mod.name.replace('clean-', '')
+                      const isRestoring = restoringMod === appName
+                      return (
+                        <div
+                          key={mod.name}
+                          className="rounded-xl bg-base-100 border border-base-300/50 p-4 flex items-center gap-4"
+                        >
+                          <div className="w-12 h-12 rounded-xl bg-secondary/15 border border-secondary/20 flex items-center justify-center">
+                            <span className="icon-[tabler--palette] size-6 text-secondary"></span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-base-content capitalize">{mod.name}</p>
+                            <p className="text-xs text-base-content/50">{mod.description}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              className="btn btn-secondary btn-sm h-9 px-4 gap-1.5"
+                              onClick={() => handleInstallMod(mod.name)}
+                              disabled={isInstalling}
+                            >
+                              {isInstalling ? (
+                                <span className="loading loading-spinner loading-xs"></span>
+                              ) : (
+                                <span className="icon-[tabler--download] size-4"></span>
+                              )}
+                              Install
+                            </button>
+                            <button
+                              className="btn btn-ghost btn-sm h-9 px-3 gap-1.5 text-base-content/60"
+                              onClick={() => handleRestoreMod(appName)}
+                              disabled={isRestoring}
+                              title="Restore original"
+                            >
+                              {isRestoring ? (
+                                <span className="loading loading-spinner loading-xs"></span>
+                              ) : (
+                                <span className="icon-[tabler--restore] size-4"></span>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
                 </div>
               )}
             </div>

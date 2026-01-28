@@ -21,6 +21,11 @@ export interface AppInfo {
   hasIcon: boolean
 }
 
+export interface ModInfo {
+  name: string
+  description: string
+}
+
 export interface SimulatorAppInfo {
   name: string
   path: string
@@ -57,6 +62,11 @@ export interface ElectronAPI {
   getAvailableApps: () => Promise<{ success: boolean; apps?: AppInfo[]; error?: string }>
   readBadgeInfo: () => Promise<{ success: boolean; info?: BadgePersonalInfo; error?: string }>
   writeBadgeInfo: (info: BadgePersonalInfo) => Promise<{ success: boolean; error?: string }>
+  
+  // UI Mods
+  getAvailableMods: () => Promise<{ success: boolean; mods?: ModInfo[]; error?: string }>
+  installMod: (modName: string) => Promise<{ success: boolean; message?: string; error?: string }>
+  restoreMod: (appName: string) => Promise<{ success: boolean; message?: string; error?: string }>
   
   // Simulator APIs
   simulatorCheckInstalled: () => Promise<SimulatorStatus>
