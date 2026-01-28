@@ -1,21 +1,20 @@
 # Badge UI Mods
 
-Clean, modern UI modifications for the GitHub Universe 2025 Badge.
+Clean UI modifications for the GitHub Universe 2025 Badge.
 
-## What's Different?
+## How the Badge Works
 
-These mods improve the visual design within the badge's 160×120 pixel hardware limitation:
+1. **On startup**: Badge shows intro animation → then **menu** (app grid)
+2. **Select an app**: Use arrows to navigate, ENTER to launch
+3. **Return to menu**: Press **HOME button** (this resets the badge and shows menu again)
 
-### Original vs Clean UI
+The HOME button triggers a hardware reset, which restarts the badge and shows the menu.
 
-| Aspect | Original | Clean Mod |
-|--------|----------|-----------|
-| Color palette | Bright, high contrast | GitHub dark theme, subtle |
-| Layout | Cluttered, overlapping | Organized sections, proper spacing |
-| Text | Multiple font sizes | Consistent hierarchy |
-| Stats | Stacked vertically | Clean horizontal row |
-| Contribution graph | Full 53 weeks, scrolling | Recent 30 weeks, static |
-| Error screens | Text-heavy | Clear instructions with numbers |
+## What's Different in the Mod?
+
+The clean-badge mod improves text readability:
+- Brighter white text (`240, 248, 255` vs `235, 245, 255`)
+- Same layout, colors, and functionality as original
 
 ## Installation
 
@@ -31,26 +30,33 @@ These mods improve the visual design within the badge's 160×120 pixel hardware 
 2. Navigate to the badge volume (usually `BADGER`)
 3. Backup the original file:
    ```
-   cp /Volumes/BADGER/apps/badge/__init__.py /Volumes/BADGER/apps/badge/__init__.py.bak
+   cp /Volumes/BADGER/system/apps/badge/__init__.py /Volumes/BADGER/system/apps/badge/__init__.py.bak
    ```
 4. Copy the mod file:
    ```
-   cp badge-files/mods/clean-badge/__init__.py /Volumes/BADGER/apps/badge/__init__.py
+   cp badge-files/mods/clean-badge/__init__.py /Volumes/BADGER/system/apps/badge/__init__.py
    ```
 5. Tap RESET once to reload
 
 ## Available Mods
 
 ### `clean-badge`
-Cleaner GitHub profile display:
-- Dark GitHub-style color palette
-- Horizontal stats row (repos, followers, contribs)
-- Compact contribution graph (recent activity only)
-- Small avatar in corner
-- Clean loading states
+Improved badge profile display:
+- Cleaner, brighter text for better readability
+- Same layout and design as original
 
-### `clean-menu`
-Cleaner app launcher:
+### `bootlog-startup`
+Dev-style boot log instead of animation:
+- Terminal-style green text on black
+- Typing effect with `[ OK ]` status messages
+- Shows fake hardware initialization
+- Press any key to continue to menu
+
+Install to: `/system/apps/startup/__init__.py`
+
+### `clean-menu` (Optional)
+Cleaner app launcher menu:
+Cleaner app launcher menu:
 - 3×2 grid layout
 - Sorted apps alphabetically
 - Selected app name in footer
@@ -59,30 +65,28 @@ Cleaner app launcher:
 
 ## Reverting to Original
 
-If you backed up your files, simply restore them:
+### Via the Desktop App
+1. Go to **Apps** tab
+2. Click **Restore Original** next to the installed mod
+
+### Manual Restore
+If you backed up your files, restore them:
 ```bash
-cp /Volumes/BADGER/apps/badge/__init__.py.bak /Volumes/BADGER/apps/badge/__init__.py
+cp /Volumes/BADGER/system/apps/badge/__init__.py.bak /Volumes/BADGER/system/apps/badge/__init__.py
 ```
 
 Or re-flash the original firmware UF2 to reset everything.
 
+## Navigation
+
+- **Arrows**: Navigate between apps in menu
+- **ENTER (B button)**: Launch selected app
+- **HOME button**: Return to menu (hardware reset)
+- **A+C held**: Force refresh data in badge app
+
 ## Technical Notes
 
 - These mods work with the existing firmware (no UF2 changes needed)
-- Compatible with the official badge firmware
+- Compatible with the official badge firmware  
 - Preserves all functionality (WiFi, GitHub API, etc.)
 - Only changes visual presentation
-
-## Color Palette Reference
-
-```
-Background Dark:    #0D1117 (13, 17, 23)
-Background Card:    #161B22 (22, 27, 34)
-Background Hover:   #21262D (33, 38, 45)
-Text Primary:       #E6EDF3 (230, 237, 243)
-Text Secondary:     #8B949E (139, 148, 158)
-Accent Green:       #238636 (35, 134, 54)
-Accent Lime:        #D3FA37 (211, 250, 55)
-```
-
-These colors match GitHub's dark theme for a cohesive look.

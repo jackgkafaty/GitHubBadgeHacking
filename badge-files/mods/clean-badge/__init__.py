@@ -1,6 +1,7 @@
-# Cleaner Badge UI Mod
-# Optimized for 160x120 display - less cluttered, better spacing
+# Cleaner Badge UI Mod - Original Layout with Clean Text
+# Keeps the original badge layout but with cleaner, crisper text
 # Replace /system/apps/badge/__init__.py with this file
+# Press HOME button to return to menu
 
 import sys
 import os
@@ -17,30 +18,13 @@ import gc
 import json
 
 # ============================================================================
-# CLEAN UI COLOR PALETTE - Optimized for small display clarity
+# COLORS - Clean text colors (original layout preserved)
 # ============================================================================
-class Colors:
-    # Background layers
-    BG_DARK = brushes.color(13, 17, 23)         # #0D1117 - Main background
-    BG_CARD = brushes.color(22, 27, 34)         # #161B22 - Card background
-    BG_ELEVATED = brushes.color(33, 38, 45)     # #21262D - Elevated surfaces
-    
-    # Text colors
-    TEXT_PRIMARY = brushes.color(230, 237, 243)   # #E6EDF3 - Primary text
-    TEXT_SECONDARY = brushes.color(139, 148, 158) # #8B949E - Secondary text
-    TEXT_MUTED = brushes.color(110, 118, 129)     # #6E7681 - Muted text
-    
-    # Accent colors
-    ACCENT_GREEN = brushes.color(35, 134, 54)     # #238636 - GitHub green
-    ACCENT_LIME = brushes.color(211, 250, 55)     # #D3FA37 - Badge phosphor
-    ACCENT_BLUE = brushes.color(31, 111, 235)     # #1F6FEB - Links/interactive
-    
-    # Contribution graph levels (darker, more subtle)
-    CONTRIB_0 = brushes.color(22, 27, 34)         # Empty
-    CONTRIB_1 = brushes.color(14, 68, 41)         # Low
-    CONTRIB_2 = brushes.color(0, 109, 50)         # Medium-low
-    CONTRIB_3 = brushes.color(38, 166, 65)        # Medium-high
-    CONTRIB_4 = brushes.color(57, 211, 83)        # High
+# Original phosphor color
+phosphor = brushes.color(211, 250, 55, 150)
+# Cleaner white - slightly brighter for better readability
+white = brushes.color(240, 248, 255)
+faded = brushes.color(240, 248, 255, 100)
 
 # ============================================================================
 # FONTS
@@ -63,17 +47,10 @@ wlan = None
 connected = False
 ticks_start = None
 
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
+
 def message(text):
     print(text)
 
-def fake_number():
-    return random.randint(100, 9999)
-
-def placeholder_if_none(val, placeholder="..."):
-    return val if val is not None else placeholder
 
 def get_connection_details(user):
     global WIFI_PASSWORD, WIFI_SSID, GITHUB_TOKEN, GITHUB_USERNAME
@@ -107,6 +84,7 @@ def get_connection_details(user):
     user.handle = GITHUB_USERNAME
     return True
 
+
 def wlan_start():
     global wlan, ticks_start, connected, WIFI_PASSWORD, WIFI_SSID
 
@@ -125,16 +103,19 @@ def wlan_start():
             return True
         
         wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+        print("Connecting to WiFi...")
 
     connected = wlan.isconnected()
     
     if io.ticks - ticks_start < WIFI_TIMEOUT * 1000:
         if connected:
+            print("WiFi connected!")
             return True
     elif not connected:
         return False
     
     return True
+
 
 def async_fetch_to_disk(url, file, force_update=False, timeout_ms=25000):
     if not force_update and file_exists(file):
@@ -157,165 +138,152 @@ def async_fetch_to_disk(url, file, force_update=False, timeout_ms=25000):
                 if (length := response.readinto(data)) == 0:
                     break
                 total += length
+                message(f"Fetched {total} bytes")
                 f.write(data[:length])
                 yield
         del data
         del response
     except Exception as e:
-        message(f"Fetch error: {e}")
         try:
-            os.remove(file)
-        except:
+            if file_exists(file):
+                os.remove(file)
+        except Exception:
             pass
+        if isinstance(e, TimeoutError):
+            raise
+        raise RuntimeError(f"Fetch from {url} to {file} failed. {e}") from e
+
 
 def get_user_data(user, force_update=False):
-    url = DETAILS_URL.format(user=user.handle)
-    file = "/user_data.json"
-    for _ in async_fetch_to_disk(url, file, force_update):
-        yield
+    message(f"Getting user data for {user.handle}...")
     try:
-        with open(file, "r") as f:
-            data = json.load(f)
-            user.name = data.get("name") or user.handle
-            user.followers = data.get("followers", 0)
-            user.repos = data.get("public_repos", 0)
+        yield from async_fetch_to_disk(DETAILS_URL.format(user=user.handle), "/user_data.json", force_update)
     except Exception as e:
-        message(f"User data parse error: {e}")
+        error_msg = str(e).lower()
+        if "403" in error_msg or "rate limit" in error_msg:
+            message("Rate limit exceeded")
+            user.name = "Rate Limited"
+            user.handle = user.handle or "Unknown"
+            user.followers = 0
+            user.repos = 0
+            return
+        else:
+            message(f"Failed to get user data: {e}")
+            user.name = "Fetch Error"
+            user.handle = user.handle or "Unknown"
+            user.followers = 0
+            user.repos = 0
+            return
+    
+    try:
+        r = json.loads(open("/user_data.json", "r").read())
+        user.name = r.get("name", user.handle)
+        user.handle = r.get("login", "Unknown Handle")
+        user.followers = r.get("followers", 0)
+        user.repos = r.get("public_repos", 0)
+        del r
+        gc.collect()
+    except Exception as e:
+        message(f"Failed to parse user data: {e}")
+        user.name = "Parse Error"
+        user.followers = 0
+        user.repos = 0
+
 
 def get_contrib_data(user, force_update=False):
-    url = CONTRIB_URL.format(user=user.handle)
-    file = "/contrib_data.json"
-    for _ in async_fetch_to_disk(url, file, force_update):
-        yield
+    message(f"Getting contribution data for {user.handle}...")
     try:
-        with open(file, "r") as f:
-            data = json.load(f)
-            user.contribs = data.get("total", 0)
-            weeks = data.get("weeks", [])
-            if weeks:
-                user.contribution_data = [[0] * 53 for _ in range(7)]
-                for wi, week in enumerate(weeks[:53]):
-                    for di, day in enumerate(week.get("days", [])):
-                        if di < 7:
-                            user.contribution_data[di][wi] = min(day.get("level", 0), 4)
+        yield from async_fetch_to_disk(CONTRIB_URL.format(user=user.handle), "/contrib_data.json", force_update, timeout_ms=15000)
+    except TimeoutError as e:
+        message(f"Contrib fetch timed out: {e}")
+        user.contribs = 0
+        user.contribution_data = [[0 for _ in range(53)] for _ in range(7)]
+        return
     except Exception as e:
-        message(f"Contrib data parse error: {e}")
+        message(f"Failed to fetch contrib data: {e}")
+        user.contribs = 0
+        user.contribution_data = [[0 for _ in range(53)] for _ in range(7)]
+        return
+
+    try:
+        r = json.loads(open("/contrib_data.json", "r").read())
+    except Exception as e:
+        message(f"Failed to parse contrib JSON: {e}")
+        user.contribs = 0
+        user.contribution_data = [[0 for _ in range(53)] for _ in range(7)]
+        return
+
+    total = r.get("total_contributions")
+    weeks = r.get("weeks") or []
+    max_weeks = min(len(weeks), 53)
+    user.contribution_data = [[0 for _ in range(53)] for _ in range(7)]
+
+    computed_total = 0
+    for w in range(max_weeks):
+        week = weeks[w] or {}
+        days = week.get("contribution_days") or []
+        for d in range(min(len(days), 7)):
+            day = days[d] or {}
+            level = day.get("level", 0)
+            count = day.get("count", 0)
+            try:
+                lvl_index = int(level)
+                if lvl_index < 0 or lvl_index >= len(User.levels):
+                    lvl_index = 0
+            except Exception:
+                lvl_index = 0
+            user.contribution_data[d][w] = lvl_index
+            computed_total += int(count)
+
+    if total is None or total == 0:
+        user.contribs = computed_total
+    else:
+        user.contribs = int(total)
+    del r
+    gc.collect()
+
 
 def get_avatar(user, force_update=False):
-    url = USER_AVATAR.format(user=user.handle)
-    file = "/avatar.png"
-    for _ in async_fetch_to_disk(url, file, force_update):
-        yield
+    message(f"Getting avatar for {user.handle}...")
+    avatar_path = "/avatar.png"
     try:
-        user.avatar = Image.load(file)
+        yield from async_fetch_to_disk(USER_AVATAR.format(user=user.handle), avatar_path, force_update)
+        if file_exists(avatar_path):
+            user.avatar = Image.load(avatar_path)
+        else:
+            message("Avatar file not found after download")
+            user.avatar = False
     except Exception as e:
-        message(f"Avatar load error: {e}")
+        message(f"Failed to get avatar: {e}")
         user.avatar = False
 
-# ============================================================================
-# CLEANER UI DRAWING FUNCTIONS
-# ============================================================================
-def draw_rounded_rect(x, y, w, h, r, brush):
-    """Draw a cleaner rounded rectangle"""
-    screen.brush = brush
-    rect = shapes.rounded_rectangle(x, y, w, h, r)
-    screen.draw(rect)
 
-def draw_divider(y, margin=8):
-    """Draw a subtle horizontal divider"""
-    screen.brush = Colors.BG_ELEVATED
-    screen.draw(shapes.rectangle(margin, y, 160 - margin * 2, 1))
+def fake_number():
+    return random.randint(10000, 99999)
 
-def draw_stat_clean(label, value, x, y, width=45):
-    """Draw a stat with clean layout - value on top, label below"""
-    # Value (large, bright)
-    screen.font = large_font
-    screen.brush = Colors.TEXT_PRIMARY if value is not None else Colors.TEXT_MUTED
-    val_str = str(value) if value is not None else "—"
-    vw, _ = screen.measure_text(val_str)
-    screen.text(val_str, x + (width - vw) // 2, y)
-    
-    # Label (small, subtle)
-    screen.font = small_font
-    screen.brush = Colors.TEXT_SECONDARY
-    lw, _ = screen.measure_text(label)
-    screen.text(label, x + (width - lw) // 2, y + 12)
 
-def draw_header(username, name, y=0):
-    """Draw clean header with username and name"""
-    # Background strip
-    screen.brush = Colors.BG_CARD
-    screen.draw(shapes.rectangle(0, y, 160, 28))
-    
-    # Username (primary)
-    screen.font = large_font
-    screen.brush = Colors.TEXT_PRIMARY
-    handle = f"@{username}" if username else "..."
-    hw, _ = screen.measure_text(handle)
-    screen.text(handle, 80 - hw // 2, y + 3)
-    
-    # Name (secondary, below)
-    screen.font = small_font
-    screen.brush = Colors.ACCENT_LIME
-    disp_name = name if name else ""
-    nw, _ = screen.measure_text(disp_name)
-    screen.text(disp_name, 80 - nw // 2, y + 16)
+def placeholder_if_none(text):
+    if text:
+        return text
+    old_seed = random.seed()
+    random.seed(int(io.ticks / 100))
+    chars = "!\"£$%^&*()_+-={}[]:@~;'#<>?,./\\|"
+    text = ""
+    for _ in range(20):
+        text += random.choice(chars)
+    random.seed(old_seed)
+    return text
 
-def draw_contribution_graph_clean(data, y, height=35):
-    """Draw a cleaner, more compact contribution graph"""
-    levels = [Colors.CONTRIB_0, Colors.CONTRIB_1, Colors.CONTRIB_2, Colors.CONTRIB_3, Colors.CONTRIB_4]
-    
-    # Calculate visible columns (fit nicely in 160px with margins)
-    margin = 4
-    cell_size = 4
-    gap = 1
-    visible_cols = (160 - margin * 2) // (cell_size + gap)  # ~30 columns
-    
-    # Start from recent data (right side of contribution graph)
-    start_col = max(0, 53 - visible_cols)
-    
-    for row in range(7):
-        for col in range(visible_cols):
-            src_col = start_col + col
-            if data and src_col < 53:
-                level = data[row][src_col]
-            else:
-                level = 0
-            
-            screen.brush = levels[level]
-            px = margin + col * (cell_size + gap)
-            py = y + row * (cell_size + gap)
-            screen.draw(shapes.rectangle(px, py, cell_size, cell_size))
 
-def draw_avatar_clean(avatar, x, y, size=40):
-    """Draw avatar with clean border"""
-    if avatar and avatar is not False:
-        try:
-            # Simple border
-            screen.brush = Colors.BG_ELEVATED
-            screen.draw(shapes.rounded_rectangle(x - 2, y - 2, size + 4, size + 4, 4))
-            screen.blit(avatar, x, y)
-            return
-        except:
-            pass
-    
-    # Fallback: Clean placeholder
-    screen.brush = Colors.BG_ELEVATED
-    screen.draw(shapes.rounded_rectangle(x, y, size, size, 4))
-    screen.brush = Colors.ACCENT_LIME
-    # Simple loading indicator
-    t = io.ticks / 500
-    cx, cy = x + size // 2, y + size // 2
-    for i in range(4):
-        angle = t + i * 1.57
-        dx = int(math.cos(angle) * 8)
-        dy = int(math.sin(angle) * 8)
-        screen.draw(shapes.circle(cx + dx, cy + dy, 2))
-
-# ============================================================================
-# USER CLASS - Cleaner version
-# ============================================================================
 class User:
+    levels = [
+        brushes.color(21 / 2,  27 / 2,  35 / 2),
+        brushes.color(3 / 2,  58 / 2,  22 / 2),
+        brushes.color(25 / 2, 108 / 2,  46 / 2),
+        brushes.color(46 / 2, 160 / 2,  67 / 2),
+        brushes.color(86 / 2, 211 / 2, 100 / 2),
+    ]
+
     def __init__(self):
         self.handle = None
         self.update()
@@ -330,146 +298,160 @@ class User:
         self._task = None
         self._force_update = force_update
 
-    def draw(self, is_connected):
-        # === CLEAN LAYOUT ===
-        # Header: 0-28px (username + name)
-        # Stats row: 30-55px 
-        # Contrib graph: 58-93px
-        # Footer: 95-120px (loading status)
-        
-        # Clear background
-        screen.brush = Colors.BG_DARK
-        screen.draw(shapes.rectangle(0, 0, 160, 120))
-        
-        # Header section
-        draw_header(self.handle, self.name, y=0)
-        
-        # Stats section (horizontal row)
-        stats_y = 32
-        draw_stat_clean("repos", self.repos, 4, stats_y, 48)
-        draw_stat_clean("followers", self.followers, 56, stats_y, 48)
-        draw_stat_clean("contribs", self.contribs, 108, stats_y, 48)
-        
-        # Contribution graph
-        draw_divider(55, margin=4)
-        draw_contribution_graph_clean(self.contribution_data, y=58, height=35)
-        
-        # Footer / Status area
-        draw_divider(95, margin=4)
-        
-        # Show loading status or branding
+    def draw_stat(self, title, value, x, y):
+        # value may be 0; treat None as missing
+        screen.brush = white if value is not None else faded
+        screen.font = large_font
+        screen.text(str(value) if value is not None else str(fake_number()), x, y)
         screen.font = small_font
-        if not is_connected:
-            screen.brush = Colors.TEXT_MUTED
-            screen.text("Connecting...", 4, 100)
-        elif self._task:
-            # Still loading
-            screen.brush = Colors.TEXT_SECONDARY
-            if self.name is None:
-                status = "Loading profile..."
-            elif self.contribs is None:
-                status = "Loading contributions..."
-            elif self.avatar is None:
-                status = "Loading avatar..."
-            else:
-                status = "Loading..."
-            screen.text(status, 4, 100)
-        else:
-            # Loaded - show branding
-            screen.brush = Colors.TEXT_MUTED
-            screen.text("GitHub Universe 2025", 4, 100)
-        
-        # Avatar (small, bottom right)
-        draw_avatar_clean(self.avatar, 118, 98, 38)
-        
-        # Handle async loading
-        if is_connected and (self.name is None or self.contribs is None or self.avatar is None):
-            if not self._task:
-                if self.name is None:
+        screen.brush = phosphor
+        screen.text(title, x - 1, y + 13)
+
+    def draw(self, connected):
+        # draw contribution graph background
+        size = 15
+        graph_width = 53 * (size + 2)
+        xo = int(-math.sin(io.ticks / 5000) *
+                 ((graph_width - 160) / 2)) + ((graph_width - 160) / 2)
+
+        screen.font = small_font
+        rect = shapes.rounded_rectangle(0, 0, size, size, 2)
+        for y in range(7):
+            for x in range(53):
+                if self.contribution_data:
+                    level = self.contribution_data[y][x]
+                    screen.brush = User.levels[level]
+                else:
+                    screen.brush = User.levels[1]
+                pos = (x * (size + 2) - xo, y * (size + 2) + 1)
+                if pos[0] + size < 0 or pos[0] > 160:
+                    continue
+                rect.transform = Matrix().translate(*pos)
+                screen.draw(rect)
+
+        # draw handle
+        screen.font = large_font
+        handle = self.handle
+
+        if ((self.handle is None) or (self.avatar is None) or (self.contribs is None)) and connected:
+            if not self.name:
+                handle = "fetching user data..."
+                if not self._task:
                     self._task = get_user_data(self, self._force_update)
-                elif self.contribs is None:
+            elif self.contribs is None:
+                handle = "fetching contribs..."
+                if not self._task:
                     self._task = get_contrib_data(self, self._force_update)
-                elif self.avatar is None:
+            else:
+                handle = "fetching avatar..."
+                if not self._task:
                     self._task = get_avatar(self, self._force_update)
-            
-            if self._task:
-                try:
-                    next(self._task)
-                except StopIteration:
-                    self._task = None
-                except:
-                    self._task = None
 
-# ============================================================================
-# ERROR SCREENS - Cleaner versions
-# ============================================================================
-def no_secrets_error():
-    screen.brush = Colors.BG_DARK
-    screen.draw(shapes.rectangle(0, 0, 160, 120))
-    
-    # Header
-    screen.brush = Colors.BG_CARD
-    screen.draw(shapes.rectangle(0, 0, 160, 24))
-    screen.font = large_font
-    screen.brush = Colors.TEXT_PRIMARY
-    screen.text("Setup Required", 8, 5)
-    
-    # Instructions
-    screen.font = small_font
-    screen.brush = Colors.ACCENT_LIME
-    screen.text("1.", 8, 30)
-    screen.text("2.", 8, 58)
-    screen.text("3.", 8, 86)
-    
-    screen.brush = Colors.TEXT_SECONDARY
-    screen.text("Tap RESET twice for", 24, 30)
-    screen.text("disk mode", 24, 40)
-    
-    screen.text("Edit secrets.py with", 24, 58)
-    screen.text("WiFi & GitHub info", 24, 68)
-    
-    screen.text("Reload to see your", 24, 86)
-    screen.text("GitHub stats!", 24, 96)
+            try:
+                next(self._task)
+            except StopIteration:
+                self._task = None
+            except:
+                self._task = None
+                handle = "fetch error"
 
-def connection_error():
-    screen.brush = Colors.BG_DARK
-    screen.draw(shapes.rectangle(0, 0, 160, 120))
-    
-    # Header
-    screen.brush = Colors.BG_CARD
-    screen.draw(shapes.rectangle(0, 0, 160, 24))
-    screen.font = large_font
-    screen.brush = Colors.TEXT_PRIMARY
-    screen.text("WiFi Error", 8, 5)
-    
-    # Error icon (simple X)
-    screen.brush = brushes.color(248, 81, 73)  # Red
-    screen.draw(shapes.circle(140, 12, 8))
-    
-    # Message
-    screen.font = small_font
-    screen.brush = Colors.TEXT_SECONDARY
-    screen.text("Could not connect to", 8, 32)
-    screen.text("the WiFi network.", 8, 44)
-    
-    screen.brush = Colors.TEXT_MUTED
-    screen.text("Check secrets.py for", 8, 64)
-    screen.text("correct WiFi credentials", 8, 76)
-    
-    screen.brush = Colors.ACCENT_LIME
-    screen.text("Then reload the badge", 8, 100)
+        if not connected:
+            handle = "connecting..."
 
-# ============================================================================
-# MAIN
-# ============================================================================
+        w, _ = screen.measure_text(handle)
+        screen.brush = white
+        screen.text(handle, 80 - (w / 2), 2)
+
+        # draw name
+        screen.font = small_font
+        screen.brush = phosphor
+        name = placeholder_if_none(self.name)
+        w, _ = screen.measure_text(name)
+        screen.text(name, 80 - (w / 2), 16)
+
+        # draw statistics
+        self.draw_stat("followers", self.followers, 88, 33)
+        self.draw_stat("contribs", self.contribs, 88, 62)
+        self.draw_stat("repos", self.repos, 88, 91)
+
+        # draw avatar image
+        if not self.avatar:
+            drawDefaultAvatar()
+        else:
+            try:
+                screen.blit(self.avatar, 5, 37)
+            except Exception as e:
+                drawDefaultAvatar()
+
+
+def drawDefaultAvatar():
+    screen.brush = phosphor
+    squircle = shapes.squircle(0, 0, 10, 5)
+    screen.brush = brushes.color(211, 250, 55, 50)
+    for i in range(4):
+        mul = math.sin(io.ticks / 1000) * 14000
+        squircle.transform = Matrix().translate(42, 75).rotate(
+            (io.ticks + i * mul) / 40).scale(1 + i / 1.3)
+        screen.draw(squircle)
+
+
 user = User()
 connected = file_exists("/contrib_data.json") and file_exists("/user_data.json") and file_exists("/avatar.png")
 force_update = False
 
+
+def center_text(text, y):
+    w, h = screen.measure_text(text)
+    screen.text(text, 80 - (w / 2), y)
+
+
+def wrap_text(text, x, y):
+    lines = text.splitlines()
+    for line in lines:
+        _, h = screen.measure_text(line)
+        screen.text(line, x, y)
+        y += h * 0.8
+
+
+def no_secrets_error():
+    screen.font = large_font
+    screen.brush = white
+    center_text("Missing Details!", 5)
+
+    screen.text("1:", 10, 23)
+    screen.text("2:", 10, 55)
+    screen.text("3:", 10, 87)
+
+    screen.brush = phosphor
+    screen.font = small_font
+    wrap_text("""Put your badge into\ndisk mode (tap\nRESET twice)""", 30, 24)
+    wrap_text("""Edit 'secrets.py' to\nset WiFi details and\nGitHub username.""", 30, 56)
+    wrap_text("""Reload to see your\nsweet sweet stats!""", 30, 88)
+
+
+def connection_error():
+    screen.font = large_font
+    screen.brush = white
+    center_text("Connection Failed!", 5)
+
+    screen.text("1:", 10, 63)
+    screen.text("2:", 10, 95)
+
+    screen.brush = phosphor
+    screen.font = small_font
+    wrap_text("""Could not connect\nto the WiFi network.\n\n:-(""", 16, 20)
+    wrap_text("""Edit 'secrets.py' to\nset WiFi details and\nGitHub username.""", 30, 65)
+    wrap_text("""Reload to see your\nsweet sweet stats!""", 30, 96)
+
+
 def update():
     global connected, force_update
 
-    # Force refresh with A+C held
+    screen.brush = brushes.color(0, 0, 0)
+    screen.draw(shapes.rectangle(0, 0, 160, 120))
+
+    force_update = False
+
     if io.BUTTON_A in io.held and io.BUTTON_C in io.held:
         connected = False
         user.update(True)
@@ -481,6 +463,7 @@ def update():
             connection_error()
     else:
         no_secrets_error()
+
 
 if __name__ == "__main__":
     run(update)

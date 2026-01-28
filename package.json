@@ -50,7 +50,7 @@
     "appId": "com.github.badge-customizer",
     "productName": "GitHub Badge Customizer",
     "directories": {
-      "output": "release"
+      "output": "Prod"
     },
     "files": [
       "dist/**/*",
