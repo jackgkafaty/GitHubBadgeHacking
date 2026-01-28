@@ -1,0 +1,483 @@
+@import "tailwindcss";
+@import "flyonui/variants.css";
+@plugin "flyonui";
+@plugin "@iconify/tailwind4";
+@source "flyonui/dist/index.js";
+
+/* Custom GitHub-inspired dark theme - Professional Dark UI */
+@theme {
+  /* Background layers - more depth */
+  --color-base-100: oklch(11% 0.01 265);
+  --color-base-200: oklch(14% 0.012 265);
+  --color-base-300: oklch(18% 0.015 265);
+  --color-base-content: oklch(95% 0.005 265);
+  
+  /* Brand colors - GitHub green as primary */
+  --color-primary: oklch(65% 0.19 145);
+  --color-primary-content: oklch(100% 0 0);
+  --color-secondary: oklch(58% 0.15 260);
+  --color-secondary-content: oklch(100% 0 0);
+  --color-accent: oklch(70% 0.18 45);
+  --color-accent-content: oklch(20% 0.05 45);
+  
+  /* Neutral for borders/muted */
+  --color-neutral: oklch(22% 0.015 265);
+  --color-neutral-content: oklch(85% 0.01 265);
+  
+  /* Status colors */
+  --color-info: oklch(65% 0.18 240);
+  --color-info-content: oklch(100% 0 0);
+  --color-success: oklch(65% 0.19 145);
+  --color-success-content: oklch(100% 0 0);
+  --color-warning: oklch(78% 0.16 65);
+  --color-warning-content: oklch(20% 0.05 65);
+  --color-error: oklch(60% 0.22 25);
+  --color-error-content: oklch(100% 0 0);
+  
+  /* Rounded corners - smoother look */
+  --radius-box: 1rem;
+  --radius-btn: 0.625rem;
+  --radius-badge: 0.5rem;
+}
+
+/* ========================================
+   GLOBAL STYLES
+   ======================================== */
+html {
+  color-scheme: dark;
+}
+
+body {
+  @apply antialiased;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  background: linear-gradient(180deg, oklch(9% 0.015 265) 0%, oklch(11% 0.01 265) 100%);
+}
+
+/* ========================================
+   CUSTOM SCROLLBAR
+   ======================================== */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: oklch(12% 0.01 265);
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(25% 0.015 265);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(32% 0.02 265);
+}
+
+/* ========================================
+   CARD ENHANCEMENTS
+   ======================================== */
+.card {
+  border: 1px solid oklch(20% 0.01 265);
+  background: linear-gradient(180deg, oklch(15% 0.012 265) 0%, oklch(13% 0.01 265) 100%);
+  box-shadow: 
+    0 0 0 1px oklch(18% 0.01 265),
+    0 2px 8px -2px oklch(0% 0 0 / 0.4),
+    0 4px 16px -4px oklch(0% 0 0 / 0.3);
+}
+
+.card:hover {
+  border-color: oklch(25% 0.015 265);
+}
+
+.card-body {
+  gap: 0;
+}
+
+/* Card hover effect class */
+.card-hover {
+  @apply transition-all duration-200;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 0 0 1px oklch(25% 0.015 265),
+    0 4px 12px -2px oklch(0% 0 0 / 0.5),
+    0 8px 24px -4px oklch(0% 0 0 / 0.4);
+}
+
+/* ========================================
+   TOAST ANIMATION
+   ======================================== */
+@keyframes shrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.animate-shrink {
+  animation: shrink 5s linear forwards;
+}
+
+/* ========================================
+   INPUT STYLING - CONSISTENT MODERN LOOK
+   ======================================== */
+.input,
+.select,
+.textarea {
+  background: oklch(10% 0.01 265) !important;
+  border: 1px solid oklch(22% 0.015 265) !important;
+  border-radius: 0.625rem !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.9375rem !important;
+  color: oklch(92% 0.005 265) !important;
+  transition: all 0.2s ease !important;
+  height: auto !important;
+  min-height: 2.75rem !important;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: oklch(55% 0.18 145) !important;
+  box-shadow: 0 0 0 3px oklch(55% 0.18 145 / 0.15) !important;
+  outline: none !important;
+}
+
+.input::placeholder {
+  color: oklch(45% 0.01 265) !important;
+}
+
+.input-bordered {
+  border-color: oklch(22% 0.015 265) !important;
+}
+
+/* Input Group Styling - FlyonUI pattern using .input as wrapper */
+.input.flex > input {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  min-height: auto !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.input.flex > input:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Form Control */
+.form-control .label {
+  padding: 0.5rem 0.25rem;
+}
+
+.label-text {
+  color: oklch(80% 0.01 265);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.label-text-alt {
+  font-size: 0.75rem;
+  color: oklch(55% 0.01 265);
+}
+
+/* ========================================
+   BUTTON ENHANCEMENTS
+   ======================================== */
+.btn {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: all 0.15s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, oklch(68% 0.18 145) 0%, oklch(60% 0.19 145) 100%);
+  border: none;
+  box-shadow: 0 1px 2px oklch(0% 0 0 / 0.3), inset 0 1px 0 oklch(100% 0 0 / 0.1);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, oklch(72% 0.17 145) 0%, oklch(64% 0.18 145) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px oklch(65% 0.19 145 / 0.4), inset 0 1px 0 oklch(100% 0 0 / 0.1);
+}
+
+.btn-ghost {
+  color: oklch(75% 0.01 265);
+}
+
+.btn-ghost:hover {
+  background: oklch(20% 0.01 265);
+  color: oklch(95% 0.005 265);
+}
+
+.btn-outline {
+  border: 1px solid oklch(28% 0.015 265);
+  background: transparent;
+  color: oklch(80% 0.01 265);
+}
+
+.btn-outline:hover {
+  background: oklch(18% 0.012 265);
+  border-color: oklch(35% 0.015 265);
+  color: oklch(95% 0.005 265);
+}
+
+/* ========================================
+   BADGE/TAG STYLING
+   ======================================== */
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.badge-success {
+  background: oklch(65% 0.19 145 / 0.15);
+  color: oklch(70% 0.18 145);
+  border: 1px solid oklch(65% 0.19 145 / 0.3);
+}
+
+.badge-warning {
+  background: oklch(78% 0.16 65 / 0.15);
+  color: oklch(80% 0.15 65);
+  border: 1px solid oklch(78% 0.16 65 / 0.3);
+}
+
+.badge-info {
+  background: oklch(65% 0.18 240 / 0.15);
+  color: oklch(70% 0.16 240);
+  border: 1px solid oklch(65% 0.18 240 / 0.3);
+}
+
+.badge-error {
+  background: oklch(60% 0.22 25 / 0.15);
+  color: oklch(68% 0.2 25);
+  border: 1px solid oklch(60% 0.22 25 / 0.3);
+}
+
+.badge-neutral, .badge-ghost {
+  background: oklch(22% 0.01 265);
+  color: oklch(65% 0.01 265);
+  border: 1px solid oklch(28% 0.015 265);
+}
+
+/* ========================================
+   ALERT STYLING
+   ======================================== */
+.alert {
+  border-radius: 0.75rem;
+  border: 1px solid;
+  font-weight: 500;
+}
+
+.alert-success {
+  background: oklch(65% 0.19 145 / 0.1);
+  border-color: oklch(65% 0.19 145 / 0.3);
+  color: oklch(75% 0.16 145);
+}
+
+.alert-error {
+  background: oklch(60% 0.22 25 / 0.1);
+  border-color: oklch(60% 0.22 25 / 0.3);
+  color: oklch(70% 0.18 25);
+}
+
+.alert-warning {
+  background: oklch(78% 0.16 65 / 0.1);
+  border-color: oklch(78% 0.16 65 / 0.3);
+  color: oklch(82% 0.14 65);
+}
+
+.alert-info {
+  background: oklch(65% 0.18 240 / 0.1);
+  border-color: oklch(65% 0.18 240 / 0.3);
+  color: oklch(72% 0.15 240);
+}
+
+/* ========================================
+   SIDEBAR STYLING
+   ======================================== */
+.sidebar-nav-btn {
+  @apply w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200;
+  color: oklch(70% 0.01 265);
+}
+
+.sidebar-nav-btn:hover {
+  background: oklch(18% 0.012 265);
+  color: oklch(90% 0.005 265);
+}
+
+.sidebar-nav-btn.active {
+  background: linear-gradient(90deg, oklch(55% 0.18 145 / 0.2) 0%, oklch(55% 0.18 145 / 0.05) 100%);
+  color: oklch(70% 0.16 145);
+  border-left: 3px solid oklch(65% 0.19 145);
+  padding-left: calc(1rem - 3px);
+}
+
+/* ========================================
+   BADGE PREVIEW STYLING
+   ======================================== */
+.badge-preview {
+  background: linear-gradient(145deg, oklch(8% 0.012 265) 0%, oklch(12% 0.015 265) 100%);
+  border: 1px solid oklch(20% 0.015 265);
+  box-shadow: 
+    inset 0 1px 0 oklch(20% 0.01 265),
+    0 20px 40px -15px oklch(0% 0 0 / 0.6);
+}
+
+/* ========================================
+   CONTRIBUTION GRAPH
+   ======================================== */
+.contrib-cell {
+  @apply rounded-sm;
+  transition: transform 0.1s ease;
+}
+
+.contrib-cell:hover {
+  transform: scale(1.5);
+}
+
+.contrib-level-0 { background: oklch(18% 0.01 265); }
+.contrib-level-1 { background: oklch(35% 0.12 145); }
+.contrib-level-2 { background: oklch(45% 0.15 145); }
+.contrib-level-3 { background: oklch(55% 0.17 145); }
+.contrib-level-4 { background: oklch(65% 0.19 145); }
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+@keyframes pulse-green {
+  0%, 100% { 
+    opacity: 1; 
+    box-shadow: 0 0 0 0 oklch(65% 0.19 145 / 0.6);
+  }
+  50% { 
+    opacity: 0.8;
+    box-shadow: 0 0 0 4px oklch(65% 0.19 145 / 0);
+  }
+}
+
+.animate-pulse-green {
+  animation: pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, oklch(30% 0.01 265), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ========================================
+   DRAG AREA STYLING
+   ======================================== */
+.drag-area {
+  border: 2px dashed oklch(25% 0.015 265);
+  border-radius: 1rem;
+  padding: 2rem;
+  transition: all 0.2s ease;
+  background: oklch(12% 0.01 265);
+}
+
+.drag-area:hover {
+  border-color: oklch(55% 0.18 145);
+  background: oklch(55% 0.18 145 / 0.05);
+}
+
+.drag-area.dragging {
+  border-color: oklch(65% 0.19 145);
+  background: oklch(65% 0.19 145 / 0.1);
+  transform: scale(1.01);
+}
+
+/* ========================================
+   STEPS STYLING
+   ======================================== */
+.steps .step::before {
+  background: oklch(22% 0.015 265) !important;
+}
+
+.steps .step-primary::before {
+  background: oklch(65% 0.19 145) !important;
+}
+
+.steps .step::after {
+  background: oklch(18% 0.01 265) !important;
+  color: oklch(60% 0.01 265) !important;
+}
+
+.steps .step-primary::after {
+  background: oklch(65% 0.19 145) !important;
+  color: oklch(100% 0 0) !important;
+}
+
+/* ========================================
+   DRAGGABLE WINDOW REGION
+   ======================================== */
+.drag-region {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.drag-region button,
+.drag-region a,
+.drag-region input {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+/* ========================================
+   SECTION HEADERS
+   ======================================== */
+.section-header {
+  @apply flex items-center gap-3 mb-6 pb-4 border-b border-base-300;
+}
+
+.section-icon {
+  @apply w-11 h-11 rounded-xl flex items-center justify-center;
+  background: linear-gradient(135deg, var(--icon-color, oklch(65% 0.18 240)) 0%, oklch(0% 0 0 / 0.3) 100%);
+  box-shadow: 0 2px 8px var(--icon-color, oklch(65% 0.18 240 / 0.3));
+}
+
+.section-icon.icon-info { --icon-color: oklch(65% 0.18 240 / 0.2); }
+.section-icon.icon-primary { --icon-color: oklch(65% 0.19 145 / 0.2); }
+.section-icon.icon-accent { --icon-color: oklch(70% 0.18 45 / 0.2); }
+.section-icon.icon-warning { --icon-color: oklch(78% 0.16 65 / 0.2); }
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+.glass-effect {
+  background: oklch(15% 0.01 265 / 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid oklch(25% 0.015 265);
+}
+
+.glow-success {
+  box-shadow: 0 0 20px -5px oklch(65% 0.19 145 / 0.4);
+}
+
+.glow-primary {
+  box-shadow: 0 0 20px -5px oklch(65% 0.19 145 / 0.4);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, oklch(70% 0.16 145) 0%, oklch(65% 0.18 240) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

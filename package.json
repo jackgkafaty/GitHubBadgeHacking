@@ -1,0 +1,79 @@
+{
+  "name": "github-badge-customizer",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Desktop application for customizing your GitHub Universe Badge",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && electron-builder",
+    "preview": "vite preview",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && VITE_DEV_SERVER_URL=http://localhost:5173 electron .\"",
+    "electron:build": "vite build && electron-builder"
+  },
+  "keywords": [
+    "github",
+    "badge",
+    "customizer",
+    "electron",
+    "react"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "serialport": "^13.0.0",
+    "usb": "^2.14.0"
+  },
+  "devDependencies": {
+    "@iconify-json/tabler": "^1.2.18",
+    "@iconify/tailwind4": "^1.1.3",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^22.19.7",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.5",
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.1.2",
+    "electron": "^40.0.0",
+    "electron-builder": "^26.6.0",
+    "flyonui": "^2.4.1",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^4.1.8",
+    "typescript": "^5.8.3",
+    "vite": "^6.4.1",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.6",
+    "wait-on": "^8.0.5"
+  },
+  "build": {
+    "appId": "com.github.badge-customizer",
+    "productName": "GitHub Badge Customizer",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    }
+  }
+}
